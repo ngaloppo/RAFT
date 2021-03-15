@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Intel Corporation
+// Copyright (C) 2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 //
 #include "cpu_kernel.hpp"
@@ -111,29 +111,31 @@ InferenceEngine::StatusCode GridSampleImpl::execute(std::vector<InferenceEngine:
     const int inpPlane = inpHeight * inpWidth;
     const int outPlane = height * width;
     InferenceEngine::parallel_for(batch, [&](int d) {
-        const float* inp  = inpData + d * inpPlane;
+        const float* inp  = inpData + d * channels * inpPlane;
         const float* grid = gridData + d * outPlane * 2;
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
                 int offset = y * width + x;
 
-                float input_x = (grid[offset * 2] + 1) * inpWidth;
+                float input_x = 0.5f * (grid[offset * 2] + 1) * (inpWidth - 1);
                 int x0 = static_cast<int>(input_x);
                 int x1 = std::min(x0 + 1, inpWidth - 1);
 
-                float input_y = (grid[offset * 2 + 1] + 1) * inpHeight;
+                float input_y = 0.5f * (grid[offset * 2 + 1] + 1) * (inpHeight - 1);
                 int y0 = static_cast<int>(input_y);
                 int y1 = std::min(y0 + 1, inpHeight - 1);
 
                 const float* inp_row0 = inp + y0 * inpWidth;
                 const float* inp_row1 = inp + y1 * inpWidth;
-                float* out = outData + d * outPlane + offset;
+                float* out = outData + d * channels * outPlane;
                 for (int c = 0; c < channels; ++c) {
-                    *out = inp_row0[x0] +
+                    out[offset] = inp_row0[x0] +
                            (input_y - y0) * (inp_row1[x0] - inp_row0[x0]) +
                            (input_x - x0) * (inp_row0[x1] - inp_row0[x0] +
                            (input_y - y0) * (inp_row1[x1] - inp_row0[x1] - inp_row1[x0] + inp_row0[x0]));
                     out += outPlane;
+                    inp_row0 += inpPlane;
+                    inp_row1 += inpPlane;
                 }
             }
         }
