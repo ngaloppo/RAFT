@@ -72,16 +72,16 @@ class RAFT(nn.Module):
     def upsample_flow(self, flow, mask):
         """ Upsample flow field [H/8, W/8, 2] -> [H, W, 2] using convex combination """
         N, _, H, W = flow.shape
-        mask = mask.view(N, 1, 9, 8, 8, H, W)
-        mask = torch.softmax(mask, dim=2)
+        assert(N == 1, 'Expected batch size 1')
+        mask = mask.view(1, 9, 8, 8, H, W)
+        mask = torch.softmax(mask, dim=1)
 
         up_flow = F.unfold(8 * flow, [3,3], padding=1)
-        up_flow = up_flow.view(N, 2, 9, 1, 1, H, W)
+        up_flow = up_flow.view(2, 9, 1, 1, H, W)
 
-        up_flow = torch.sum(mask * up_flow, dim=2)
-        up_flow = up_flow.permute(0, 1, 4, 2, 5, 3)
+        up_flow = torch.sum(mask * up_flow, dim=1)
+        up_flow = up_flow.permute(0, 3, 1, 4, 2)
         return up_flow.reshape(N, 2, 8*H, 8*W)
-
 
     def forward(self, image1, image2, iters=12, flow_init=None, upsample=True, test_mode=False):
         """ Estimate optical flow between pair of frames """
