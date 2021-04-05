@@ -1,6 +1,9 @@
 # Copyright (C) 2020 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 #
+cmake_minimum_required(VERSION 3.8)
+
+project(cpu_extensions)
 
 # [cmake:extension]
 set(TARGET_NAME "user_cpu_extension")
