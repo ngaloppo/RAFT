@@ -32,6 +32,7 @@ if __name__ == '__main__':
     parser.add_argument('--mixed_precision', action='store_true', help='use mixed precision')
     parser.add_argument('--alternate_corr', action='store_true', help='use efficent correlation implementation')
     parser.add_argument('--shape', type=int, nargs='+', default=[1, 3, 436, 1024])
+    parser.add_argument('--iters', type=int, default=20)
     args = parser.parse_args()
 
     model = load_model(args)
